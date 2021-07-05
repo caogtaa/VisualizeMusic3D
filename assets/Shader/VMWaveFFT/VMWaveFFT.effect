@@ -12,18 +12,18 @@
 CCEffect %{
   techniques:
   - passes:
-    - vert: vs
-      frag: fs
+    - vert: unlit-vs
+      frag: unlit-fs
       blendState:
         targets:
         - blend: true
       rasterizerState:
         cullMode: none
       properties:
-        texture: { value: white }
+        mainTexture: { value: white }
 }%
 
-CCProgram vs %{
+CCProgram unlit-vs %{
   precision highp float;
 
   #include <cc-global>
@@ -47,7 +47,7 @@ CCProgram vs %{
   }
 }%
 
-CCProgram fs %{
+CCProgram unlit-fs %{
   precision highp float;
 
   #include <cc-global>
@@ -58,7 +58,7 @@ CCProgram fs %{
   in vec4 v_color;
   in vec2 v_uv0;
 
-  uniform sampler2D texture;
+  uniform sampler2D mainTexture;
 
   float Remap01(float a, float b, float t) {
     return (t-a) / (b-a);
@@ -75,12 +75,12 @@ CCProgram fs %{
   // float getAmp(float frequency) {
   //   float x = frequency / 512.0;
   //   float col = Remap(0., 1., startCol, endCol, x);
-  //   return texture(texture, vec2(col, row)).r;
+  //   return texture(mainTexture, vec2(col, row)).r;
   //   // return texture(iChannel0, , 0)).x;
   // }
 
   float getWeight(float x) {
-    return texture(texture, vec2(x, 0.5)).r;
+    return texture(mainTexture, vec2(x, 0.5)).r;
     // no much difference in my case
     // return getAmp(f);
     // return (+ getAmp(f-2.0) + getAmp(f-1.0) + getAmp(f+2.0) + getAmp(f+1.0) + getAmp(f)) / 5.0;
@@ -126,7 +126,7 @@ CCProgram fs %{
       float h = mix(h2.x, h2.y, lerpF);
 
       // float Y = uv.y + h * 0.5;
-          // 0.5;//(texture(texture, vec2(col, 1.)).x - 0.5);
+          // 0.5;//(texture(mainTexture, vec2(col, 1.)).x - 0.5);
       lineIntensity = 0.4 + squared(1.6 * abs(mod(v_uv0.x + i / 1.3 + t,2.0) - 1.0));
       // lineIntensity = 0.4;
 

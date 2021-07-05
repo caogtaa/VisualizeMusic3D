@@ -6,12 +6,13 @@
   "_effectAsset": {
     "__uuid__": "0c057947-88a8-4ca4-af56-52feff23bf13"
   },
-  "_techniqueIndex": 0,
-  "_techniqueData": {
-    "0": {
-      "props": {
-        "endCol": 0.0625
-      }
+  "_techIdx": 0,
+  "_defines": [],
+  "_states": [],
+  "_props": [
+    {
+      "endCol": 0.0625
     }
-  }
+  ],
+  "_techniqueIndex": 0
 }

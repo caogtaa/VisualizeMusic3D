@@ -1,3 +1,21 @@
 {
-  "__version__": "1.0.1"
+  "__version__": "1.0.1",
+  "layer": [
+    {
+      "name": "default",
+      "value": 1
+    },
+    {
+      "name": "water",
+      "value": 2
+    },
+    {
+      "name": "avatar",
+      "value": 4
+    },
+    {
+      "name": "label",
+      "value": 8
+    }
+  ]
 }

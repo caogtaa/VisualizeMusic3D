@@ -13,15 +13,15 @@
 CCEffect %{
   techniques:
   - passes:
-    - vert: vs
-      frag: fs
+    - vert: unlit-vs
+      frag: unlit-fs
       blendState:
         targets:
         - blend: true
       rasterizerState:
         cullMode: none
       properties:
-        texture: { value: white }
+        mainTexture: { value: white }
         tex2: { value: white }
         grids: { value: [32., 38.] }
         row: { value: 0. }
@@ -29,7 +29,7 @@ CCEffect %{
         endCol: { value: 0.0625 }
 }%
 
-CCProgram vs %{
+CCProgram unlit-vs %{
   precision highp float;
 
   #include <cc-global>
@@ -52,7 +52,7 @@ CCProgram vs %{
   }
 }%
 
-CCProgram fs %{
+CCProgram unlit-fs %{
   precision highp float;
 
   #include <cc-global>
@@ -63,7 +63,7 @@ CCProgram fs %{
   in vec4 v_color;
   in vec2 v_uv0;
 
-  uniform sampler2D texture;
+  uniform sampler2D mainTexture;
   uniform sampler2D tex2;     // 缓存纹理，保存上一帧状态
 
   uniform UARGS {
@@ -113,7 +113,7 @@ CCProgram fs %{
     // shift buffer
     float v = 0.;
     if (prevGid < 0.)
-      v = (texture(texture, vec2(colBass, row)).r + texture(texture, vec2(colMid, row)).r) * 0.5;
+      v = (texture(mainTexture, vec2(colBass, row)).r + texture(mainTexture, vec2(colMid, row)).r) * 0.5;
     else
       v = texture(tex2, vec2(prevGid / grids.x, 0.)).r;
 

@@ -12,21 +12,21 @@
 CCEffect %{
   techniques:
   - passes:
-    - vert: vs
-      frag: fs
+    - vert: unlit-vs
+      frag: unlit-fs
       blendState:
         targets:
         - blend: true
       rasterizerState:
         cullMode: none
       properties:
-        texture: { value: white }
+        mainTexture: { value: white }
         grids: { value: [32., 38.] }
         scaleX: { value: 1.0 }
         lod: { value: 1.0 }
 }%
 
-CCProgram vs %{
+CCProgram unlit-vs %{
   precision highp float;
 
   #include <cc-global>
@@ -49,7 +49,7 @@ CCProgram vs %{
   }
 }%
 
-CCProgram fs %{
+CCProgram unlit-fs %{
   #extension GL_EXT_shader_texture_lod : enable
   precision highp float;
 
@@ -61,7 +61,7 @@ CCProgram fs %{
   in vec4 v_color;
   in vec2 v_uv0;
 
-  uniform sampler2D texture;
+  uniform sampler2D mainTexture;
   uniform UARGS {
     vec2 grids;   // 水平、垂直格子数量
     float scaleX; // 水平轴缩放比例。截断高频部分。
@@ -95,9 +95,9 @@ CCProgram fs %{
 
     // 从频域数据上采样，uv.x对应频率
     #ifdef GL_EXT_shader_texture_lod
-      float h = texture2DLodEXT(texture, vec2(gi.x / grids.x * scaleX, 0.5), lod).r;
+      float h = texture2DLodEXT(mainTexture, vec2(gi.x / grids.x * scaleX, 0.5), lod).r;
     #else
-      float h = texture(texture, vec2(gi.x / grids.x * scaleX, 0.5)).r;
+      float h = texture(mainTexture, vec2(gi.x / grids.x * scaleX, 0.5)).r;
     #endif
 
     // 只展示频域数值以下颜色

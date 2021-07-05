@@ -1,0 +1,74 @@
+{
+  "ver": "1.0.21",
+  "importer": "image",
+  "imported": true,
+  "uuid": "ada207c0-0a84-4897-9f7f-e0e817af8ded",
+  "files": [
+    ".png",
+    ".json"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "ada207c0-0a84-4897-9f7f-e0e817af8ded@6c48a",
+      "displayName": "awesomeness-fft",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "minfilter": "nearest",
+        "magfilter": "nearest",
+        "wrapModeT": "clamp-to-edge",
+        "wrapModeS": "clamp-to-edge",
+        "mipfilter": "none",
+        "imageUuidOrDatabaseUri": "ada207c0-0a84-4897-9f7f-e0e817af8ded",
+        "anisotropy": 0,
+        "isUuid": true
+      },
+      "ver": "1.0.21",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "ada207c0-0a84-4897-9f7f-e0e817af8ded@f9941",
+      "displayName": "awesomeness-fft",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimType": "auto",
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0,
+        "trimX": 0,
+        "trimY": 0,
+        "width": 512,
+        "height": 179,
+        "rawWidth": 512,
+        "rawHeight": 179,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "imageUuidOrDatabaseUri": "ada207c0-0a84-4897-9f7f-e0e817af8ded@6c48a",
+        "packable": true,
+        "isUuid": true,
+        "atlasUuid": ""
+      },
+      "ver": "1.0.9",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "hasAlpha": false,
+    "redirect": "ada207c0-0a84-4897-9f7f-e0e817af8ded@f9941"
+  }
+}

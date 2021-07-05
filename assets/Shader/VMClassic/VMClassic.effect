@@ -12,19 +12,19 @@
 CCEffect %{
   techniques:
   - passes:
-    - vert: vs
-      frag: fs
+    - vert: unlit-vs
+      frag: unlit-fs
       blendState:
         targets:
         - blend: true
       rasterizerState:
         cullMode: none
       properties:
-        texture: { value: white }
+        mainTexture: { value: white }
         grids: { value: [32., 38.] }
 }%
 
-CCProgram vs %{
+CCProgram unlit-vs %{
   precision highp float;
 
   #include <cc-global>
@@ -48,7 +48,7 @@ CCProgram vs %{
   }
 }%
 
-CCProgram fs %{
+CCProgram unlit-fs %{
   precision highp float;
 
   #include <cc-global>
@@ -59,7 +59,7 @@ CCProgram fs %{
   in vec4 v_color;
   in vec2 v_uv0;
 
-  uniform sampler2D texture;
+  uniform sampler2D mainTexture;
   uniform UARGS {
     vec2 grids;   // 水平、垂直格子数量
   };
@@ -90,7 +90,7 @@ CCProgram fs %{
     vec2 gi = floor(uv * grids);
 
     // 从频域数据上采样，uv.x对应频率
-    float h = texture(texture, vec2(gi.x / grids.x, 0.5)).r * 0.5;
+    float h = texture(mainTexture, vec2(gi.x / grids.x, 0.5)).r * 0.5;
 
     // 只展示频域数值以下颜色
     // Y轴保留整数格（h取值floor）

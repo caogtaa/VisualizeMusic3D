@@ -1,0 +1,74 @@
+{
+  "ver": "1.0.21",
+  "importer": "image",
+  "imported": true,
+  "uuid": "fb1bce31-beb2-47b9-883a-f63fe38ef16b",
+  "files": [
+    ".png",
+    ".json"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "fb1bce31-beb2-47b9-883a-f63fe38ef16b@6c48a",
+      "displayName": "Juhani Junkala [Retro Game Music Pack] Ending-fft",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "minfilter": "nearest",
+        "magfilter": "nearest",
+        "wrapModeT": "clamp-to-edge",
+        "wrapModeS": "clamp-to-edge",
+        "mipfilter": "none",
+        "imageUuidOrDatabaseUri": "fb1bce31-beb2-47b9-883a-f63fe38ef16b",
+        "anisotropy": 0,
+        "isUuid": true
+      },
+      "ver": "1.0.21",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "fb1bce31-beb2-47b9-883a-f63fe38ef16b@f9941",
+      "displayName": "Juhani Junkala [Retro Game Music Pack] Ending-fft",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimType": "auto",
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0,
+        "trimX": 0,
+        "trimY": 0,
+        "width": 512,
+        "height": 168,
+        "rawWidth": 512,
+        "rawHeight": 168,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "imageUuidOrDatabaseUri": "fb1bce31-beb2-47b9-883a-f63fe38ef16b@6c48a",
+        "packable": true,
+        "isUuid": true,
+        "atlasUuid": ""
+      },
+      "ver": "1.0.9",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "hasAlpha": false,
+    "redirect": "fb1bce31-beb2-47b9-883a-f63fe38ef16b@f9941"
+  }
+}
