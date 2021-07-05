@@ -1,0 +1,93 @@
+// Copyright 2021 Cao Gaoting<caogtaa@gmail.com>
+// https://caogtaa.github.io
+// This file is licensed under the MIT License.
+// License text available at https://opensource.org/licenses/MIT
+
+/*
+ * Date: 2021-05-31 10:06:10
+ * LastEditors: GT<caogtaa@gmail.com>
+ * LastEditTime: 2021-06-30 00:41:49
+*/ 
+
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: vs
+      frag: fs
+      blendState:
+        targets:
+        - blend: true
+      rasterizerState:
+        cullMode: none
+      properties:
+        texture: { value: white }
+}%
+
+CCProgram vs %{
+  precision highp float;
+
+  #include <cc-global>
+  #include <cc-local>
+
+  in vec3 a_position;
+  in vec4 a_color;
+  out vec4 v_color;
+
+  in vec2 a_uv0;
+  out vec2 v_uv0;
+  
+  void main() {
+    vec4 pos = vec4(a_position, 1);
+    pos = cc_matViewProj * pos;
+    v_uv0 = a_uv0;
+
+    v_color = a_color;
+    gl_Position = pos;
+  }
+}%
+
+CCProgram fs %{
+  precision highp float;
+
+  #include <cc-global>
+  #include <cc-local>
+
+  #define PI 3.14159265
+  
+  in vec4 v_color;
+  in vec2 v_uv0;
+
+  uniform sampler2D texture;
+  
+  float Capsule(vec2 p, float o, float width, float height, float blur) {
+    float d = distance(p, vec2(clamp(p.x, o - height * 0.5, o + height * 0.5), 0.));
+    return d;
+  }
+
+  void main()
+  {
+    vec2 uv = v_uv0.xy;
+    vec4 col = texture(texture, uv) * v_color;
+
+    uv = uv * 2.0 - 1.0;
+    uv.y *= 1280./720.; // todo: use uniform attribute
+   
+    // float dist = distance(uv, vec2(0.));
+    float grids = 16.;
+    float dist = length(uv);
+    float gd = 0.0;
+    gd = dist;
+    gd = fract(dist * grids);
+    float gid = floor(dist * grids);
+
+    float h = texture(texture, vec2(gid / grids, 0.5)).r * 0.25;    
+    
+    float blur = 4./720. * (gid + 1.);
+    float width = 0.01 * (gid) + h;
+    float mask = smoothstep(width+blur, width, abs(gd - 0.5));
+
+    vec3 color = vec3(mask * (gid+1.) / grids + h);
+
+    gl_FragColor = vec4(color, mask);
+  }
+}%
