@@ -1,0 +1,153 @@
+// Copyright 2021 Cao Gaoting<caogtaa@gmail.com>
+// https://caogtaa.github.io
+// This file is licensed under the MIT License.
+// License text available at https://opensource.org/licenses/MIT
+
+/*
+ * Date: 2021-07-06 06:00:19
+ * LastEditors: GT<caogtaa@gmail.com>
+ * LastEditTime: 2021-07-06 06:15:30
+*/ 
+// Copyright (c) 2017-2020 Xiamen Yaji Software Co., Ltd.
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        alphaThreshold: { value: 0.5 }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <cc-global>
+  #if USE_LOCAL
+    #include <cc-local>
+  #endif
+  #if SAMPLE_FROM_RT
+    #include <common>
+  #endif
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 color;
+  out vec2 uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+
+    #if USE_LOCAL
+      pos = cc_matWorld * pos;
+    #endif
+
+    #if USE_PIXEL_ALIGNMENT
+      pos = cc_matView * pos;
+      pos.xyz = floor(pos.xyz);
+      pos = cc_matProj * pos;
+    #else
+      pos = cc_matViewProj * pos;
+    #endif
+
+    uv0 = a_texCoord;
+    #if SAMPLE_FROM_RT
+      CC_HANDLE_RT_SAMPLE_FLIP(uv0);
+    #endif
+    color = a_color;
+
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+  #include <embedded-alpha>
+  #include <alpha-test>
+
+  in vec4 color;
+
+  #if USE_TEXTURE
+    in vec2 uv0;
+    #pragma builtin(local)
+    layout(set = 2, binding = 10) uniform sampler2D cc_spriteTexture;
+  #endif
+
+  uniform UARGS {
+    vec2 grids;   // 水平、垂直格子数量
+  };
+
+  // https://www.shadertoy.com/view/MsS3Wc
+  // Smooth HSV to RGB conversion 
+  vec3 hsv2rgb_smooth(in vec3 c) {
+    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
+    rgb = rgb*rgb*(3.0-2.0*rgb); // cubic smoothing	
+    return c.z * mix(vec3(1.0), rgb, c.y);
+  }
+
+  float Remap01(float a, float b, float t) {
+    return (t-a) / (b-a);
+  }
+
+  float Remap(float a, float b, float c, float d, float t) {
+    return Remap01(a, b, t) * (d - c) + c;
+  }
+
+  vec4 frag () {
+    vec2 uv = uv0;
+
+    // uv缩放为正方形，hardcode屏幕分辨率
+    uv.y *= 1280./720.;
+
+    uv.y = uv.y * 2.0 - 1.0;
+
+    // uv缩放偏移使左右屏幕留边（可以和1280./720.计算合并）
+    uv = uv * 1.1 - 0.05;
+
+    // 网格化
+    vec2 guv = fract(uv * grids);
+    vec2 gi = floor(uv * grids);
+
+    // 从频域数据上采样，uv.x对应频率
+    float h = texture(cc_spriteTexture, vec2(gi.x / grids.x, 0.5)).r * 0.5;
+
+    // 至少显示1px，0.01取1./逻辑分辨率高度
+    h = max(h, 0.01);
+
+    // 只展示频域数值以下颜色
+    float mask = step(uv.y, h);
+    
+    // remove uv.y < 0
+    mask *= step(0., uv.y);
+
+    // 截断左右留边部分
+    // mask *= step(0., uv.x) * step(uv.x, 1.0);
+    mask *= step(abs(uv.x - 0.5), 0.5);
+
+    // 倒影变透明
+    // mix(0.2, 1.0, step(0.0, uv.y));
+    // mask *= uv.y < 0. ? 0.2 : 1.0;
+
+    // // 网格左右留空 0.15（换种说法：距离中心0.35的保留）
+    mask *= smoothstep(0.5, 0.35, abs(guv.x - 0.5));
+
+    // 在色谱上挑选一个区域[0.7, 0.08]，将h=[0, 0.5]映射获取颜色
+    h = Remap(0., 0.5, 0.7, 0.08, h);
+    vec3 hsl = vec3(h, 1.0, 1.0);
+    vec3 rgb_s = hsv2rgb_smooth(hsl);
+    rgb_s *= mask;
+
+    vec4 col = vec4(rgb_s, mask);
+    return col;
+  }
+}%

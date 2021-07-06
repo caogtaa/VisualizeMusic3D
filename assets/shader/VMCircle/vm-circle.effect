@@ -1,0 +1,127 @@
+// Copyright 2021 Cao Gaoting<caogtaa@gmail.com>
+// https://caogtaa.github.io
+// This file is licensed under the MIT License.
+// License text available at https://opensource.org/licenses/MIT
+
+/*
+ * Date: 2021-07-06 06:00:19
+ * LastEditors: GT<caogtaa@gmail.com>
+ * LastEditTime: 2021-07-06 06:15:30
+*/ 
+// Copyright (c) 2017-2020 Xiamen Yaji Software Co., Ltd.
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        alphaThreshold: { value: 0.5 }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <cc-global>
+  #if USE_LOCAL
+    #include <cc-local>
+  #endif
+  #if SAMPLE_FROM_RT
+    #include <common>
+  #endif
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 color;
+  out vec2 uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+
+    #if USE_LOCAL
+      pos = cc_matWorld * pos;
+    #endif
+
+    #if USE_PIXEL_ALIGNMENT
+      pos = cc_matView * pos;
+      pos.xyz = floor(pos.xyz);
+      pos = cc_matProj * pos;
+    #else
+      pos = cc_matViewProj * pos;
+    #endif
+
+    uv0 = a_texCoord;
+    #if SAMPLE_FROM_RT
+      CC_HANDLE_RT_SAMPLE_FLIP(uv0);
+    #endif
+    color = a_color;
+
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+  #include <embedded-alpha>
+  #include <alpha-test>
+
+  in vec4 color;
+
+  #if USE_TEXTURE
+    in vec2 uv0;
+    #pragma builtin(local)
+    layout(set = 2, binding = 10) uniform sampler2D cc_spriteTexture;
+  #endif
+
+  // vec4 frag () {
+  //   vec4 o = vec4(1, 1, 1, 1);
+
+  //   #if USE_TEXTURE
+  //     o *= CCSampleWithAlphaSeparated(cc_spriteTexture, uv0);
+  //     #if IS_GRAY
+  //       float gray  = 0.2126 * o.r + 0.7152 * o.g + 0.0722 * o.b;
+  //       o.r = o.g = o.b = gray;
+  //     #endif
+  //   #endif
+
+  //   o *= color;
+  //   ALPHA_TEST(o);
+  //   o = vec4(0., 1., 0., 1.);
+  //   return o;
+  // }
+
+  vec4 frag () {
+    vec2 uv = uv0;
+
+    uv = uv * 2.0 - 1.0;
+    uv.y *= 1280./720.; // todo: use uniform attribute
+   
+    // float dist = distance(uv, vec2(0.));
+    float grids = 16.;
+    float dist = length(uv);
+    float gd = 0.0;
+    gd = dist;
+    gd = fract(dist * grids);
+    float gid = floor(dist * grids);
+
+    float h = texture(cc_spriteTexture, vec2(gid / grids, 0.5)).r * 0.25;    
+    
+    float blur = 4./720. * (gid + 1.);
+    float width = 0.01 * (gid) + h;
+    float mask = smoothstep(width+blur, width, abs(gd - 0.5));
+
+    vec3 c = vec3(mask * (gid+1.) / grids + h);
+
+    return vec4(c, mask);
+  }
+}%
