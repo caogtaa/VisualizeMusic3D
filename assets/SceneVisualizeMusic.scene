@@ -2090,7 +2090,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Camera",
+    "_name": "Camera0",
     "_objFlags": 0,
     "_parent": {
       "__id__": 69
@@ -2437,7 +2437,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Camera",
+    "_name": "Camera1",
     "_objFlags": 0,
     "_parent": {
       "__id__": 82

@@ -8,7 +8,7 @@
  * LastEditTime: 2021-05-23 22:48:17
 */ 
 
-import { _decorator, RenderTexture, SpriteFrame, Node, Camera, Texture2D, Component, AudioClip, Sprite, Material, UITransform, AudioSource, Color, director, Canvas } from 'cc';
+import { _decorator, RenderTexture, SpriteFrame, Node, Camera, Texture2D, Component, AudioClip, Sprite, Material, UITransform, AudioSource, Color, director, Canvas, RenderPipeline } from 'cc';
 const {ccclass, property} = _decorator;
 
 class RenderBuff {
@@ -126,6 +126,7 @@ export default class SceneVisualizeMusic extends Component {
         this.NextAudio();
         this.NextMat();
     }
+    
     public NextMat() {
         if (this.materials.length === 0)
             return;
@@ -151,12 +152,14 @@ export default class SceneVisualizeMusic extends Component {
 
             // assign renderBuff to materials texture 2
             // img.getMaterial(0)?.setProperty("tex2", renderBuff.texture);
-            img.customMaterial.setProperty("tex2", renderBuff.texture);
+            // todo: break loop
+            // img.customMaterial.setProperty("tex2", renderBuff.texture);
         }
 
         // this.visualizerEx?.setMaterial(mat, 0);
         this.visualizerEx.customMaterial = mat;
     }
+    
     public NextAudio() {
         if (this.clips.length === 0 || this.fftTextures.length !== this.clips.length)
             return;
@@ -282,6 +285,7 @@ export default class SceneVisualizeMusic extends Component {
         cameraComponent.targetTexture = targetBuff.texture;
         // director.root.pipeline.render([cameraComponent.camera]);
         // cameraComponent.targetTexture = null;
+
 
         return targetBuff.texture;
     }
