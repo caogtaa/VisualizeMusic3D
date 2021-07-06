@@ -8,7 +8,7 @@
  * LastEditTime: 2021-05-21 19:54:20
 */ 
 
-import { _decorator, Sprite, SpriteFrame } from 'cc';
+import { _decorator, Sprite, SpriteFrame, Texture2D, AudioSource } from 'cc';
 const {ccclass, property} = _decorator;
 
 @ccclass('MusicVisualizer')
@@ -17,24 +17,31 @@ export default class MusicVisualizer extends Sprite {
         type: SpriteFrame,
         displayName: "FFT纹理"
     })
-    set fft(value: SpriteFrame) {
-        //if (value) {
-        //let texture = value.getTexture();
-        //texture.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
-        //texture.packable = false;
-        //}
 
-        //this.spriteFrame = value;
+    set fft(value: SpriteFrame | null) {
+        if (value) {
+            let texture = value.texture as Texture2D;
+            texture.setFilters(Texture2D.Filter.NEAREST, Texture2D.Filter.NEAREST);
+            value.packable = false;
+            // texture.packable = false;
+        }
+
+        this.spriteFrame = value;
     }
-    get fft(): SpriteFrame {
-        //return this.spriteFrame;
+    get fft(): SpriteFrame | null {
+        return this.spriteFrame;
     }
-    protected _audioId: number = -1;
+
+    protected _audioSource: AudioSource | null = null;
+    // protected _audioId: number = -1;
     protected _samplePerRow: number = 16;
+
     onLoad() {
     }
+
     onDestroy() {
     }
+
     /**
      * 对运行中的音乐进行可视化。
      * 需要由外部控制音乐的播放、停止。外部通过调用cc.audioEngine.playMusic()获取audioId
@@ -42,43 +49,46 @@ export default class MusicVisualizer extends Sprite {
      * @param fft           audioId对应音频的FFT纹理
      * @param samplePerRow  FFT纹理每行存储的采样数
      */
-    public SyncAudio(audioId: number, fft?: SpriteFrame, samplePerRow?: number) {
-        //this._audioId = audioId;
+    public SyncAudio(audioSource: AudioSource, fft?: SpriteFrame, samplePerRow?: number) {
+        this._audioSource = audioSource;
 
-        //if (fft !== undefined) {
+        if (fft !== undefined) {
             // 强制修改纹理状态。像素化 & 禁止动态合图
-        //let texture = fft.getTexture();
-        //texture.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
-        //texture.packable = false;
+            let texture = fft.texture as Texture2D;
+            texture.setFilters(Texture2D.Filter.NEAREST, Texture2D.Filter.NEAREST);
+            fft.packable = false;
+            // texture.packable = false;
 
-        //this.fft = fft;
-        //}
+            this.fft = fft;
+        }
 
-        //if (samplePerRow !== undefined)
-        //this._samplePerRow = samplePerRow;
+        if (samplePerRow !== undefined)
+            this._samplePerRow = samplePerRow;
     }
+
     protected UpdateFFTShader(sprite: Sprite, frame: number) {
-        //let textureHeight = sprite?.spriteFrame?.getTexture()?.height || 1;
-        //let samplePerRow = this._samplePerRow;
+        let textureHeight = sprite?.spriteFrame?.texture.height || 1;
+        let samplePerRow = this._samplePerRow;
 
         // +0.5确保不会采样到其他row
-        //let row = (Math.floor(frame / samplePerRow) + 0.5) / textureHeight;
-        //let startCol = (frame % samplePerRow) / samplePerRow;
-        //let endCol = (frame % samplePerRow + 1) / samplePerRow;
-        //let mat = sprite.getMaterial(0);
-        //if (mat) {
-        //mat.setProperty("row", row);
-        //mat.setProperty("startCol", startCol);
-        //mat.setProperty("endCol", endCol);
-        //}
+        let row = (Math.floor(frame / samplePerRow) + 0.5) / textureHeight;
+        let startCol = (frame % samplePerRow) / samplePerRow;
+        let endCol = (frame % samplePerRow + 1) / samplePerRow;
+        let mat = sprite.getMaterial(0);
+        if (mat) {
+            mat.setProperty("row", row);
+            mat.setProperty("startCol", startCol);
+            mat.setProperty("endCol", endCol);
+        }
     }
-    update() {
-        //if (this._audioId === -1)
-        //return;
 
-        //let t = cc.audioEngine.getCurrentTime(this._audioId);
-        //let frame = Math.floor(t * 60);     // floor or round?
-        //this.UpdateFFTShader(this, frame);
+    update() {
+        if (!this._audioSource)
+            return;
+
+        let t = this._audioSource!.currentTime;
+        let frame = Math.floor(t * 60);     // floor or round?
+        this.UpdateFFTShader(this, frame);
     }
 }
 

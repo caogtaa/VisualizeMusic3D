@@ -1,0 +1,122 @@
+// Copyright 2021 Cao Gaoting<caogtaa@gmail.com>
+// https://caogtaa.github.io
+// This file is licensed under the MIT License.
+// License text available at https://opensource.org/licenses/MIT
+
+/*
+ * Date: 2021-07-06 06:00:19
+ * LastEditors: GT<caogtaa@gmail.com>
+ * LastEditTime: 2021-07-06 06:15:30
+*/ 
+// Copyright (c) 2017-2020 Xiamen Yaji Software Co., Ltd.
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        alphaThreshold: { value: 0.5 }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <cc-global>
+  #if USE_LOCAL
+    #include <cc-local>
+  #endif
+  #if SAMPLE_FROM_RT
+    #include <common>
+  #endif
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 color;
+  out vec2 uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+
+    #if USE_LOCAL
+      pos = cc_matWorld * pos;
+    #endif
+
+    #if USE_PIXEL_ALIGNMENT
+      pos = cc_matView * pos;
+      pos.xyz = floor(pos.xyz);
+      pos = cc_matProj * pos;
+    #else
+      pos = cc_matViewProj * pos;
+    #endif
+
+    uv0 = a_texCoord;
+    #if SAMPLE_FROM_RT
+      CC_HANDLE_RT_SAMPLE_FLIP(uv0);
+    #endif
+    color = a_color;
+
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+  #include <embedded-alpha>
+  #include <alpha-test>
+
+  in vec4 color;
+
+  #if USE_TEXTURE
+    in vec2 uv0;
+    #pragma builtin(local)
+    layout(set = 2, binding = 10) uniform sampler2D cc_spriteTexture;
+  #endif
+
+  uniform sampler2D tex2;     // 缓存纹理，保存上一帧状态
+
+  uniform UARGS {
+    vec2 grids;   // 水平、垂直格子数量
+    float row;
+    float startCol;
+    float endCol;
+  };
+  
+  float Remap01(float a, float b, float t) {
+    return (t-a) / (b-a);
+  }
+
+  float Remap(float a, float b, float c, float d, float t) {
+    return Remap01(a, b, t) * (d - c) + c;
+  }
+
+  vec4 frag () {
+    vec2 uv = uv0;
+
+    // 网格化
+    // vec2 guv = fract(uv * grids);
+    vec2 gi = floor(uv * grids);
+
+    // 从频域数据上采样，uv.x对应频率
+    // todo: optimize Remap
+    float col = Remap(0., 1., startCol, endCol, gi.x / grids.x);  // 将uv从[0, 1]映射到当前采样对应的纹理区间
+    float v = texture(cc_spriteTexture, vec2(col, row)).r;
+
+    // mix with tex2
+    // float v2 = texture(tex2, uv).r;
+    // v = max(v, v2-(0.5/2./grids.y)); // 每帧最多下降0.5格
+
+    vec4 c = vec4(vec3(v), 1.);
+    return c;
+  }
+}%

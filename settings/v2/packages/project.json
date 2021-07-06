@@ -16,6 +16,14 @@
     {
       "name": "label",
       "value": 8
+    },
+    {
+      "name": "imgBuff0",
+      "value": 16
+    },
+    {
+      "name": "imgBuff1",
+      "value": 32
     }
   ],
   "general": {
