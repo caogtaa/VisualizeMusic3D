@@ -27,6 +27,7 @@ CCEffect %{
         cullMode: none
       properties:
         alphaThreshold: { value: 0.5 }
+        grids: { value: [32., 38.] }
 }%
 
 CCProgram sprite-vs %{
@@ -119,7 +120,7 @@ CCProgram sprite-fs %{
     vec2 gi = floor(uv * grids);
 
     // 从频域数据上采样，uv.x对应频率
-    float h = texture(cc_spriteTexture, vec2(gi.x / grids.x, 0.5)).r * 0.5;
+    float h = texture(cc_spriteTexture, vec2(0.5, gi.x / grids.x)).r * 0.5;   // cc_spriteTexture是竖条纹理
 
     // 至少显示1px，0.01取1./逻辑分辨率高度
     h = max(h, 0.01);
@@ -148,8 +149,7 @@ CCProgram sprite-fs %{
     rgb_s *= mask;
 
     vec4 col = vec4(rgb_s, mask);
-    // return col;
-    // todo:
-    return texture(cc_spriteTexture, uv0);
+    return col;
+    // return texture(cc_spriteTexture, uv0+vec2(0.3, 0.));
   }
 }%

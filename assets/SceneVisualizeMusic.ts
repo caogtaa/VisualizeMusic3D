@@ -28,6 +28,7 @@ class RenderBuff {
     public static CreateComputeBuff(camera: Camera, width: number, height: number): RenderBuff {
         let result = new RenderBuff;
         let texture = camera.getComponent(RTWriter).rt;
+        result.texture = texture;
         // let texture = result.texture = new RenderTexture;
         // texture.packable = false;
         // texture.setFilters(Texture2D.Filter.NEAREST, Texture2D.Filter.NEAREST);
@@ -112,6 +113,16 @@ export default class SceneVisualizeMusic extends Component {
     onLoad() {
         this.audioSource = this.getComponent(AudioSource);
 
+        let sp = new SpriteFrame;
+        sp.reset({
+            originalSize: size(10, 320),
+            rect: rect(0, 0, 10, 320),
+            offset: v2(0, 0),
+            isRotate: false,
+        });
+        sp.packable = false;
+        this.visualizerEx.spriteFrame = sp;
+
         for (let m of this.materials) {
             this._nameToMat.set(m.name, m);
         }
@@ -147,7 +158,7 @@ export default class SceneVisualizeMusic extends Component {
         let matDep = this._nameToPass0Mat.get(this._matDep.get(this.EffectName(mat)));
         for (let img of this.pass0Imgs) {
             // todo:
-            // img.customMaterial = matDep;
+            img.customMaterial = matDep;
             img.spriteFrame = this.fftTextures[this._audioIndex];
 
             let renderBuff = this._renderBuffMap.get(img.node);
@@ -166,7 +177,7 @@ export default class SceneVisualizeMusic extends Component {
         }
 
         // todo:
-        // this.visualizerEx.customMaterial = mat;
+        this.visualizerEx.customMaterial = mat;
     }
     
     public NextAudio() {
@@ -219,11 +230,9 @@ export default class SceneVisualizeMusic extends Component {
     protected _audioId: number = -1;
     protected _srcIndex: number = 0;
     protected Tick() {
-        // if (this._audioId === -1)
         if (!this.audioSource?.playing)
             return;
 
-        // let t = cc.audioEngine.getCurrentTime(this._audioId);
         let t = this.audioSource!.currentTime;
         let frame = Math.floor(t * 60);     // floor or round?
 
@@ -233,8 +242,8 @@ export default class SceneVisualizeMusic extends Component {
         let to = pass0Imgs[1-order];
 
         // 由于3.x的RT渲染需要推迟一帧，这里需要在滚动RT前展示上一帧的结果
-        // todo: 这么搞会被推迟2帧，看来必须用multi pass shader了
-        this.visualizerEx.spriteFrame = this._renderBuffMap.get(from.node).spriteFrame;
+        // todo: 这么搞会被推迟2帧，考虑改成multi pass shader
+        this.visualizerEx.spriteFrame.texture = this._renderBuffMap.get(from.node).texture;
 
         this.UpdateFFTShader(from, frame);
         let toCamera = to.node.parent.getComponent(CameraComponent);
@@ -243,10 +252,7 @@ export default class SceneVisualizeMusic extends Component {
 
         let fromCamera = from.node.parent.getComponent(CameraComponent);
         fromCamera.enabled = true;
-
-        // fromCanvas.enabled = true;
         this.RenderToNode(from.node, to.node);
-        // fromCanvas.enabled = false;       // 渲染结束后隐藏自己
 
         // 切换RenderTexture
         this._srcIndex = 1 - this._srcIndex;
@@ -254,7 +260,6 @@ export default class SceneVisualizeMusic extends Component {
 
     onDestroy() {
         this.audioSource?.stop();
-        //cc.audioEngine.stopMusic();
     }
 
     update() {
@@ -262,7 +267,7 @@ export default class SceneVisualizeMusic extends Component {
     }
 
     /**
-     * 1:1将root内容渲染到target
+     * cc 3.2目前无法主动调用render()，需要关联texture让引擎自己触发渲染
      * @param root 
      * @param target 
      * @returns 
@@ -273,35 +278,8 @@ export default class SceneVisualizeMusic extends Component {
         if (!targetBuff || !rootBuff)
             return null;       
 
-        // if (!renderBuff.cameraNode || !renderBuff.camera) {
-        // if (!rootBuff.canvas) {
-        //     // 创建截图专用的camera
-        //     // 使截屏处于被截屏对象中心（两者有同样的父节点）
-        //     let canvas = rootBuff.canvas = root.parent.getComponent(Canvas);
-        //     let rootTransform = root.getComponent(UITransform)!;
-
-        //     // let camera = renderBuff.camera = cameraNode.getComponent(Camera);
-        //     // camera.backgroundColor = new Color(255, 255, 255, 0);        // 透明区域仍然保持透明，半透明区域和白色混合
-        //     // camera.clearFlags = cc.Camera.ClearFlags.DEPTH | cc.Camera.ClearFlags.STENCIL | cc.Camera.ClearFlags.COLOR;
-
-        //     // 设置你想要的截图内容的 cullingMask
-        //     // camera.cullingMask = 0xffffffff;
-
-        //     // let targetWidth = root.width;
-        //     let targetHeight = rootTransform.height;
-
-        //     // camera.alignWithScreen = false;
-        //     // camera.orthoSize = targetHeight / 2;
-        // }
-
         let camera = root.parent.getComponent(CameraComponent);
         camera.targetTexture = targetBuff.texture;
-
-        //let cameraComponent = rootBuff.canvas.cameraComponent;
-        //cameraComponent.targetTexture = targetBuff.texture;
-        // director.root.pipeline.render([cameraComponent.camera]);
-        // cameraComponent.targetTexture = null;
-
 
         return targetBuff.texture;
     }

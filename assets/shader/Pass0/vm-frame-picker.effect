@@ -86,7 +86,7 @@ CCProgram sprite-fs %{
   uniform sampler2D tex2;     // 缓存纹理，保存上一帧状态
 
   uniform UARGS {
-    vec2 grids;   // 水平、垂直格子数量
+    // vec2 grids;   // 水平、垂直格子数量
     float row;
     float startCol;
     float endCol;
@@ -102,6 +102,7 @@ CCProgram sprite-fs %{
 
   vec4 frag () {
     vec2 uv = uv0;
+    vec2 grids = vec2(1., 32.);
 
     // 网格化
     // vec2 guv = fract(uv * grids);
@@ -109,7 +110,7 @@ CCProgram sprite-fs %{
 
     // 从频域数据上采样，uv.x对应频率
     // todo: optimize Remap
-    float col = Remap(0., 1., startCol, endCol, gi.x / grids.x);  // 将uv从[0, 1]映射到当前采样对应的纹理区间
+    float col = Remap(0., 1., startCol, endCol, gi.y / grids.y);  // 将uv从[0, 1]映射到当前采样对应的纹理区间
     float v = texture(cc_spriteTexture, vec2(col, row)).r;
 
     // mix with tex2
@@ -119,6 +120,6 @@ CCProgram sprite-fs %{
     vec4 c = vec4(vec3(v), 1.);
     // return vec4(uv0, 0., 1.);
     // return vec4(1.0) *color;
-    return vec4(uv0, 0., 1.);
+    return c;
   }
 }%
