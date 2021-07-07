@@ -1974,6 +1974,10 @@
       {
         "__uuid__": "3bbbc15b-3ad2-4607-a1b0-3650ef351a36",
         "__expectedType__": "cc.Material"
+      },
+      {
+        "__uuid__": "d4d350d6-2819-497e-825d-f09b8d1897c0",
+        "__expectedType__": "cc.Material"
       }
     ],
     "pass0Materials": [
