@@ -83,23 +83,6 @@ CCProgram sprite-fs %{
     layout(set = 2, binding = 10) uniform sampler2D cc_spriteTexture;
   #endif
 
-  // vec4 frag () {
-  //   vec4 o = vec4(1, 1, 1, 1);
-
-  //   #if USE_TEXTURE
-  //     o *= CCSampleWithAlphaSeparated(cc_spriteTexture, uv0);
-  //     #if IS_GRAY
-  //       float gray  = 0.2126 * o.r + 0.7152 * o.g + 0.0722 * o.b;
-  //       o.r = o.g = o.b = gray;
-  //     #endif
-  //   #endif
-
-  //   o *= color;
-  //   ALPHA_TEST(o);
-  //   o = vec4(0., 1., 0., 1.);
-  //   return o;
-  // }
-
   vec4 frag () {
     vec2 uv = uv0;
 

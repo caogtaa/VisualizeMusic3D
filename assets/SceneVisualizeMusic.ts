@@ -134,6 +134,8 @@ export default class SceneVisualizeMusic extends Component {
         this._matDep
             .set("vm-meter", "vm-frame-picker")
             .set("vm-circle", "vm-frame-picker")
+            .set("vm-polar", "vm-frame-picker")
+            .set("vm-classic", "vm-frame-picker")
 
         // this._matDep
         //     .set("VMWaveFFT", "VMPolarExPass0")

@@ -1952,11 +1952,19 @@
     ],
     "materials": [
       {
-        "__uuid__": "3a5b4fcb-aa4b-4153-bb54-e4640ecd85c0",
+        "__uuid__": "94b684f6-af74-445e-8541-d9377193deb7",
         "__expectedType__": "cc.Material"
       },
       {
         "__uuid__": "3bbbc15b-3ad2-4607-a1b0-3650ef351a36",
+        "__expectedType__": "cc.Material"
+      },
+      {
+        "__uuid__": "3a5b4fcb-aa4b-4153-bb54-e4640ecd85c0",
+        "__expectedType__": "cc.Material"
+      },
+      {
+        "__uuid__": "dedf0305-edb9-4ad4-80c6-be3ba28585ad",
         "__expectedType__": "cc.Material"
       }
     ],

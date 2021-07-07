@@ -4,70 +4,94 @@
 // License text available at https://opensource.org/licenses/MIT
 
 /*
- * Date: 2021-05-09 21:11:36
+ * Date: 2021-07-06 06:00:19
  * LastEditors: GT<caogtaa@gmail.com>
- * LastEditTime: 2021-05-09 21:13:59
+ * LastEditTime: 2021-07-06 06:15:30
 */ 
-
+// Copyright (c) 2017-2020 Xiamen Yaji Software Co., Ltd.
 CCEffect %{
   techniques:
   - passes:
-    - vert: unlit-vs
-      frag: unlit-fs
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
       blendState:
         targets:
         - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendDstAlpha: one_minus_src_alpha
       rasterizerState:
         cullMode: none
       properties:
-        mainTexture: { value: white }
+        alphaThreshold: { value: 0.5 }
 }%
 
-CCProgram unlit-vs %{
+CCProgram sprite-vs %{
   precision highp float;
-
   #include <cc-global>
-  #include <cc-local>
-
+  #if USE_LOCAL
+    #include <cc-local>
+  #endif
+  #if SAMPLE_FROM_RT
+    #include <common>
+  #endif
   in vec3 a_position;
+  in vec2 a_texCoord;
   in vec4 a_color;
-  out vec4 v_color;
 
-  in vec2 a_uv0;
-  out vec2 v_uv0;
-  
-  void main() {
+  out vec4 color;
+  out vec2 uv0;
+
+  vec4 vert () {
     vec4 pos = vec4(a_position, 1);
-    pos = cc_matViewProj * pos;
-    v_uv0 = a_uv0;
 
-    v_color = a_color;
-    gl_Position = pos;
+    #if USE_LOCAL
+      pos = cc_matWorld * pos;
+    #endif
+
+    #if USE_PIXEL_ALIGNMENT
+      pos = cc_matView * pos;
+      pos.xyz = floor(pos.xyz);
+      pos = cc_matProj * pos;
+    #else
+      pos = cc_matViewProj * pos;
+    #endif
+
+    uv0 = a_texCoord;
+    #if SAMPLE_FROM_RT
+      CC_HANDLE_RT_SAMPLE_FLIP(uv0);
+    #endif
+    color = a_color;
+
+    return pos;
   }
 }%
 
-CCProgram unlit-fs %{
+CCProgram sprite-fs %{
   precision highp float;
+  #include <common>
+  #include <embedded-alpha>
+  #include <alpha-test>
 
-  #include <cc-global>
-  #include <cc-local>
+  in vec4 color;
 
-  #define PI 3.14159265
-  
-  in vec4 v_color;
-  in vec2 v_uv0;
+  #if USE_TEXTURE
+    in vec2 uv0;
+    #pragma builtin(local)
+    layout(set = 2, binding = 10) uniform sampler2D cc_spriteTexture;
+  #endif
 
-  uniform sampler2D mainTexture;
-  
   float Capsule(vec2 p, float o, float width, float height, float blur) {
     float d = distance(p, vec2(clamp(p.x, o - height * 0.5, o + height * 0.5), 0.));
     return d;
   }
 
-  void main()
-  {
-    vec2 uv = v_uv0.xy;
-    vec4 col = texture(mainTexture, uv) * v_color;
+  vec4 frag () {
+    vec2 uv = uv0;
+    uv.y = 1.0 - uv.y;
 
     uv = uv * 2.0 - 1.0;
     uv.y *= 1280./720.; // todo: use uniform attribute
@@ -93,7 +117,7 @@ CCProgram unlit-fs %{
 
     // 采样频率amp，同一个grid使用相同采样
     float part_id = floor(angle * grids);
-    float h = texture(mainTexture, vec2(part_id * 2. / grids, 0.5)).r * 0.25;    
+    float h = texture(cc_spriteTexture, vec2(0.5, part_id * 2. / grids)).r * 0.25;    
     
     // 还原回原来的uv坐标，此时所有grid的坐标已经折叠
     vec2 guv = vec2(cos(part_angle / grids * 2. * PI), sin(part_angle / grids * 2. * PI)) * dist;
@@ -106,6 +130,6 @@ CCProgram unlit-fs %{
 
     vec3 color = vec3(mask);
 
-    gl_FragColor = vec4(color, mask);
+    return vec4(color, mask);
   }
 }%
