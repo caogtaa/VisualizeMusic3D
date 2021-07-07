@@ -1952,6 +1952,10 @@
     ],
     "materials": [
       {
+        "__uuid__": "034b0df1-5843-4d4b-8821-c6186e25e6ca",
+        "__expectedType__": "cc.Material"
+      },
+      {
         "__uuid__": "675a3b64-f0cf-4f3b-b8e1-8547dc363470",
         "__expectedType__": "cc.Material"
       },
