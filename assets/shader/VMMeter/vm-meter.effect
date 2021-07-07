@@ -148,6 +148,8 @@ CCProgram sprite-fs %{
     rgb_s *= mask;
 
     vec4 col = vec4(rgb_s, mask);
-    return col;
+    // return col;
+    // todo:
+    return texture(cc_spriteTexture, uv0);
   }
 }%

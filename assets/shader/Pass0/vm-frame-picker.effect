@@ -117,6 +117,8 @@ CCProgram sprite-fs %{
     // v = max(v, v2-(0.5/2./grids.y)); // 每帧最多下降0.5格
 
     vec4 c = vec4(vec3(v), 1.);
-    return c;
+    // return vec4(uv0, 0., 1.);
+    // return vec4(1.0) *color;
+    return vec4(uv0, 0., 1.);
   }
 }%

@@ -54,7 +54,7 @@
         "borderLeft": 0,
         "borderRight": 0,
         "imageUuidOrDatabaseUri": "ada207c0-0a84-4897-9f7f-e0e817af8ded@6c48a",
-        "packable": true,
+        "packable": false,
         "isUuid": true,
         "atlasUuid": ""
       },

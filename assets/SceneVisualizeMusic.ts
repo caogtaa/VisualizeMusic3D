@@ -8,13 +8,14 @@
  * LastEditTime: 2021-05-23 22:48:17
 */ 
 
-import { _decorator, RenderTexture, SpriteFrame, Node, Camera, Texture2D, Component, AudioClip, Sprite, Material, UITransform, AudioSource, Color, director, Canvas, RenderPipeline } from 'cc';
+import { _decorator, RenderTexture, SpriteFrame, Node, Camera, Texture2D, Component, AudioClip, Sprite, Material, UITransform, AudioSource, Color, director, Canvas, RenderPipeline, size, rect, math, v2, CameraComponent } from 'cc';
+import { RTWriter } from './RTWriter';
 const {ccclass, property} = _decorator;
 
 class RenderBuff {
     texture: RenderTexture = null;
     spriteFrame: SpriteFrame | null = null;
-    canvas: Canvas | null = null;
+    // canvas: Canvas | null = null;
     // cameraNode: Node | null = null;
     // camera: Camera | null = null;
 
@@ -24,20 +25,29 @@ class RenderBuff {
      * @param height 
      * @returns 
      */
-    public static CreateComputeBuff(width: number, height: number): RenderBuff {
+    public static CreateComputeBuff(camera: Camera, width: number, height: number): RenderBuff {
         let result = new RenderBuff;
-        let texture = result.texture = new RenderTexture;
+        let texture = camera.getComponent(RTWriter).rt;
+        // let texture = result.texture = new RenderTexture;
         // texture.packable = false;
         // texture.setFilters(Texture2D.Filter.NEAREST, Texture2D.Filter.NEAREST);
         // texture.initWithSize(width, height);
 
         // todo: set filter = NEAREST
-        texture.reset({
-            width: width, 
-            height: height
-        });
+        // texture.reset({
+        //     width: width, 
+        //     height: height
+        // });
+
         result.spriteFrame = new SpriteFrame;
-        result.spriteFrame.texture = texture;
+        result.spriteFrame.reset({
+            originalSize: size(width, height),
+            rect: rect(0, 0, width, height),
+            offset: v2(0, 0),
+            isRotate: false,
+            texture: texture,
+        });
+
         result.spriteFrame.packable = false;
         return result;
     }
@@ -136,14 +146,14 @@ export default class SceneVisualizeMusic extends Component {
         
         let matDep = this._nameToPass0Mat.get(this._matDep.get(this.EffectName(mat)));
         for (let img of this.pass0Imgs) {
-            img.customMaterial = matDep;
-            // img.setMaterial(matDep!, 0);
+            // todo:
+            // img.customMaterial = matDep;
             img.spriteFrame = this.fftTextures[this._audioIndex];
 
             let renderBuff = this._renderBuffMap.get(img.node);
             if (!renderBuff) {
                 let size = img.getComponent(UITransform)?.contentSize;
-                renderBuff = RenderBuff.CreateComputeBuff(size!.width, size!.height);
+                renderBuff = RenderBuff.CreateComputeBuff(img.node.parent.getComponent(Camera), size!.width, size!.height);
                 this._renderBuffMap.set(img.node, renderBuff);
             } else {
                 // 清空buff避免受上一个效果影响
@@ -151,13 +161,12 @@ export default class SceneVisualizeMusic extends Component {
             }
 
             // assign renderBuff to materials texture 2
-            // img.getMaterial(0)?.setProperty("tex2", renderBuff.texture);
             // todo: break loop
             // img.customMaterial.setProperty("tex2", renderBuff.texture);
         }
 
-        // this.visualizerEx?.setMaterial(mat, 0);
-        this.visualizerEx.customMaterial = mat;
+        // todo:
+        // this.visualizerEx.customMaterial = mat;
     }
     
     public NextAudio() {
@@ -190,6 +199,7 @@ export default class SceneVisualizeMusic extends Component {
             // img.customMaterial.setProperty("tex2", renderBuff.texture);
         }
     }
+
     protected UpdateFFTShader(sprite: Sprite, frame: number) {
         let textureHeight = sprite?.spriteFrame?.texture?.height || 1;
         let samplePerRow = 16;//this._samplePerRow;
@@ -223,13 +233,16 @@ export default class SceneVisualizeMusic extends Component {
         let to = pass0Imgs[1-order];
 
         // 由于3.x的RT渲染需要推迟一帧，这里需要在滚动RT前展示上一帧的结果
-        this.visualizerEx!.spriteFrame = this._renderBuffMap.get(to.node)!.spriteFrame;
+        // todo: 这么搞会被推迟2帧，看来必须用multi pass shader了
+        this.visualizerEx.spriteFrame = this._renderBuffMap.get(from.node).spriteFrame;
 
         this.UpdateFFTShader(from, frame);
-        let toCanvas = to.node.parent.getComponent(Canvas);
-        toCanvas.cameraComponent.targetTexture = null;        // 解绑上一帧的from节点的texture
+        let toCamera = to.node.parent.getComponent(CameraComponent);
+        toCamera.targetTexture = null;        // 解绑上一帧的from节点的texture
+        toCamera.enabled = false;
 
-        let fromCanvas = from.node.parent.getComponent(Canvas);
+        let fromCamera = from.node.parent.getComponent(CameraComponent);
+        fromCamera.enabled = true;
 
         // fromCanvas.enabled = true;
         this.RenderToNode(from.node, to.node);
@@ -261,28 +274,31 @@ export default class SceneVisualizeMusic extends Component {
             return null;       
 
         // if (!renderBuff.cameraNode || !renderBuff.camera) {
-        if (!rootBuff.canvas) {
-            // 创建截图专用的camera
-            // 使截屏处于被截屏对象中心（两者有同样的父节点）
-            let canvas = rootBuff.canvas = root.parent.getComponent(Canvas);
-            let rootTransform = root.getComponent(UITransform)!;
+        // if (!rootBuff.canvas) {
+        //     // 创建截图专用的camera
+        //     // 使截屏处于被截屏对象中心（两者有同样的父节点）
+        //     let canvas = rootBuff.canvas = root.parent.getComponent(Canvas);
+        //     let rootTransform = root.getComponent(UITransform)!;
 
-            // let camera = renderBuff.camera = cameraNode.getComponent(Camera);
-            // camera.backgroundColor = new Color(255, 255, 255, 0);        // 透明区域仍然保持透明，半透明区域和白色混合
-            // camera.clearFlags = cc.Camera.ClearFlags.DEPTH | cc.Camera.ClearFlags.STENCIL | cc.Camera.ClearFlags.COLOR;
+        //     // let camera = renderBuff.camera = cameraNode.getComponent(Camera);
+        //     // camera.backgroundColor = new Color(255, 255, 255, 0);        // 透明区域仍然保持透明，半透明区域和白色混合
+        //     // camera.clearFlags = cc.Camera.ClearFlags.DEPTH | cc.Camera.ClearFlags.STENCIL | cc.Camera.ClearFlags.COLOR;
 
-            // 设置你想要的截图内容的 cullingMask
-            // camera.cullingMask = 0xffffffff;
+        //     // 设置你想要的截图内容的 cullingMask
+        //     // camera.cullingMask = 0xffffffff;
 
-            // let targetWidth = root.width;
-            let targetHeight = rootTransform.height;
+        //     // let targetWidth = root.width;
+        //     let targetHeight = rootTransform.height;
 
-            // camera.alignWithScreen = false;
-            // camera.orthoSize = targetHeight / 2;
-        }
+        //     // camera.alignWithScreen = false;
+        //     // camera.orthoSize = targetHeight / 2;
+        // }
 
-        let cameraComponent = rootBuff.canvas.cameraComponent;
-        cameraComponent.targetTexture = targetBuff.texture;
+        let camera = root.parent.getComponent(CameraComponent);
+        camera.targetTexture = targetBuff.texture;
+
+        //let cameraComponent = rootBuff.canvas.cameraComponent;
+        //cameraComponent.targetTexture = targetBuff.texture;
         // director.root.pipeline.render([cameraComponent.camera]);
         // cameraComponent.targetTexture = null;
 
