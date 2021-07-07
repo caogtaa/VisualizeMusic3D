@@ -1,0 +1,134 @@
+// Copyright 2021 Cao Gaoting<caogtaa@gmail.com>
+// https://caogtaa.github.io
+// This file is licensed under the MIT License.
+// License text available at https://opensource.org/licenses/MIT
+
+/*
+ * Date: 2021-07-06 06:00:19
+ * LastEditors: GT<caogtaa@gmail.com>
+ * LastEditTime: 2021-07-06 06:15:30
+*/ 
+// Copyright (c) 2017-2020 Xiamen Yaji Software Co., Ltd.
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        alphaThreshold: { value: 0.5 }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <cc-global>
+  #if USE_LOCAL
+    #include <cc-local>
+  #endif
+  #if SAMPLE_FROM_RT
+    #include <common>
+  #endif
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 color;
+  out vec2 uv0;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1);
+
+    #if USE_LOCAL
+      pos = cc_matWorld * pos;
+    #endif
+
+    #if USE_PIXEL_ALIGNMENT
+      pos = cc_matView * pos;
+      pos.xyz = floor(pos.xyz);
+      pos = cc_matProj * pos;
+    #else
+      pos = cc_matViewProj * pos;
+    #endif
+
+    uv0 = a_texCoord;
+    #if SAMPLE_FROM_RT
+      CC_HANDLE_RT_SAMPLE_FLIP(uv0);
+    #endif
+    color = a_color;
+
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+  #include <common>
+  #include <embedded-alpha>
+  #include <alpha-test>
+
+  in vec4 color;
+
+  #if USE_TEXTURE
+    in vec2 uv0;
+    #pragma builtin(local)
+    layout(set = 2, binding = 10) uniform sampler2D cc_spriteTexture;
+  #endif
+
+  float Capsule(vec2 p, float o, float width, float height, float blur) {
+    float d = distance(p, vec2(clamp(p.x, o - height * 0.5, o + height * 0.5), 0.));
+    return d;
+  }
+
+  vec4 frag () {
+    vec2 uv = uv0;
+
+    uv = uv * 2.0 - 1.0;
+    uv.y *= 1280./720.; // todo: use uniform attribute
+    uv.x = abs(uv.x);
+
+    float angle = atan(uv.y, uv.x);
+
+    // 左右声道各32份（目前左右声道对称）
+    float grids = 64.;
+
+    // remap angle to [0, 1]
+    // angle = Remap(-PI, PI, 0., 1., angle);
+    angle = angle / (2. * PI) + 0.5;
+
+    // angle = 0位置和y正轴对齐
+    angle = fract(angle + 0.75);
+    
+    // float dist = distance(uv, vec2(0.));
+    float dist = length(uv);
+    
+    // angle分区，并且顺时针偏移一半，方便计算Capsule
+    float part_angle = fract(angle * grids) - 0.5;
+
+    // 采样频率amp，同一个grid使用相同采样
+    float part_id = floor(angle * grids);
+    float h = texture(cc_spriteTexture, vec2(0.5, part_id * 2. / grids)).r * 0.25;    
+    
+    // 还原回原来的uv坐标，此时所有grid的坐标已经折叠
+    vec2 guv = vec2(cos(part_angle / grids * 2. * PI), sin(part_angle / grids * 2. * PI)) * dist;
+
+    float width = 0.005;
+    float blur = 4. / 720.;
+
+    float mask = Capsule(guv, 0.6, width, h, blur);
+    mask = smoothstep(width+blur, width, mask);
+
+    vec4 c = vec4(vec3(mask), 1.);
+    return c;
+    // return texture(cc_spriteTexture, uv0);
+  }
+}%

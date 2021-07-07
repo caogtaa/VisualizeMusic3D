@@ -1952,11 +1952,7 @@
     ],
     "materials": [
       {
-        "__uuid__": "94b684f6-af74-445e-8541-d9377193deb7",
-        "__expectedType__": "cc.Material"
-      },
-      {
-        "__uuid__": "3bbbc15b-3ad2-4607-a1b0-3650ef351a36",
+        "__uuid__": "675a3b64-f0cf-4f3b-b8e1-8547dc363470",
         "__expectedType__": "cc.Material"
       },
       {
@@ -1966,11 +1962,23 @@
       {
         "__uuid__": "dedf0305-edb9-4ad4-80c6-be3ba28585ad",
         "__expectedType__": "cc.Material"
+      },
+      {
+        "__uuid__": "94b684f6-af74-445e-8541-d9377193deb7",
+        "__expectedType__": "cc.Material"
+      },
+      {
+        "__uuid__": "3bbbc15b-3ad2-4607-a1b0-3650ef351a36",
+        "__expectedType__": "cc.Material"
       }
     ],
     "pass0Materials": [
       {
         "__uuid__": "cbd598ae-ac15-4d6b-be8f-91ff22da4fa7",
+        "__expectedType__": "cc.Material"
+      },
+      {
+        "__uuid__": "bfdcf704-6b2d-480a-8a59-d3eee0dbcde0",
         "__expectedType__": "cc.Material"
       }
     ],

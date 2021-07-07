@@ -136,6 +136,7 @@ export default class SceneVisualizeMusic extends Component {
             .set("vm-circle", "vm-frame-picker")
             .set("vm-polar", "vm-frame-picker")
             .set("vm-classic", "vm-frame-picker")
+            .set("vm-polar-ex", "vm-amp-seq-picker")
 
         // this._matDep
         //     .set("VMWaveFFT", "VMPolarExPass0")
@@ -245,7 +246,9 @@ export default class SceneVisualizeMusic extends Component {
 
         // 由于3.x的RT渲染需要推迟一帧，这里需要在滚动RT前展示上一帧的结果
         // todo: 这么搞会被推迟2帧，考虑改成multi pass shader
-        this.visualizerEx.spriteFrame.texture = this._renderBuffMap.get(from.node).texture;
+        let preFrameTex = this._renderBuffMap.get(from.node).texture;
+        this.visualizerEx.spriteFrame.texture = preFrameTex;
+        from.customMaterial.setProperty("tex2", preFrameTex);
 
         this.UpdateFFTShader(from, frame);
         let toCamera = to.node.parent.getComponent(CameraComponent);
