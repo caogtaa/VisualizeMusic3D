@@ -176,7 +176,7 @@ export default class SceneVisualizeMusic3D extends Component {
         let sampleLength = textureWidth / samplePerRow;
         
         // RT Y上下颠倒
-        let row = textureHeight - Math.floor(frame / samplePerRow);
+        let row = textureHeight - 1 - Math.floor(frame / samplePerRow);
         let startCol = (frame % samplePerRow) * sampleLength;
         let endCol = (frame % samplePerRow + 1) * sampleLength;
 
