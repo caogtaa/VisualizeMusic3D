@@ -1907,11 +1907,11 @@
     "__prefab": null,
     "clips": [
       {
-        "__uuid__": "3b501166-009a-4bec-b35b-642753b37849",
+        "__uuid__": "7abf9ddd-5380-437e-ab85-9909f135039d",
         "__expectedType__": "cc.AudioClip"
       },
       {
-        "__uuid__": "7abf9ddd-5380-437e-ab85-9909f135039d",
+        "__uuid__": "3b501166-009a-4bec-b35b-642753b37849",
         "__expectedType__": "cc.AudioClip"
       },
       {
@@ -1921,11 +1921,11 @@
     ],
     "fftTextures": [
       {
-        "__uuid__": "ada207c0-0a84-4897-9f7f-e0e817af8ded@f9941",
+        "__uuid__": "fb1bce31-beb2-47b9-883a-f63fe38ef16b@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "fb1bce31-beb2-47b9-883a-f63fe38ef16b@f9941",
+        "__uuid__": "ada207c0-0a84-4897-9f7f-e0e817af8ded@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {

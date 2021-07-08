@@ -133,7 +133,10 @@ export default class SceneVisualizeMusic3D extends Component {
         src.getComponent(UITransform).contentSize = imgSize;
         dst.getComponent(UITransform).contentSize = imgSize;
 
-        this.targetRT.resize(imgSize.width, imgSize.height);
+        this.targetRT.reset({
+            width: imgSize.width, 
+            height: imgSize.height
+        });
         this.targetCamera.orthoHeight = imgSize.height / 2;
         this.targetCamera.targetTexture = this.targetRT;
         let sp = new SpriteFrame;
@@ -149,6 +152,12 @@ export default class SceneVisualizeMusic3D extends Component {
 
         src.spriteFrame = srcImg;
         dst.spriteFrame = sp;
+
+        // overwrite RT sampler
+        let sampler = srcImg.texture.getGFXSampler();
+        this.targetRT.getGFXSampler = () => {
+            return sampler;
+        };
     }
 
     protected Tick() {
@@ -161,25 +170,22 @@ export default class SceneVisualizeMusic3D extends Component {
         let t = this._audioSource!.currentTime;
         let frame = Math.floor(t * 60);
 
-        //test
-        //let poss = this.node.children[0].position;
-        //this.node.children[0].setPosition(poss.x, frame % 10, poss.z);
-        //return;
-
-        let texture = this.fftTextures[this._audioIndex].texture;
-        // let textureHeight = texture.height;
+        let textureWidth = this.targetRT.width;
+        let textureHeight = this.targetRT.height;
         let samplePerRow = 16;
-        let sampleLength = texture.width / samplePerRow;
+        let sampleLength = textureWidth / samplePerRow;
         
-        let row = Math.floor(frame / samplePerRow);
+        // RT Y上下颠倒
+        let row = textureHeight - Math.floor(frame / samplePerRow);
         let startCol = (frame % samplePerRow) * sampleLength;
         let endCol = (frame % samplePerRow + 1) * sampleLength;
 
         let fft = this._fft;
         let children = this.node.children;
-        for (let c = startCol; c < Math.min(children.length, endCol); ++c) {        // todo: only 16 pillars
-            let v = fft[(row * texture.width + c) * 4];
-            let pillar = children[c - startCol];
+        for (let i = 0; i < children.length; ++i) {
+            let c = startCol + i * 2;       // 16个柱子，但是sampleLength = 32
+            let v = fft[(row * textureWidth + c) * 4];
+            let pillar = children[i];
             let pos = pillar.position;
             let h = v / 255 * 5;        // map height to [0, 5]
             pillar.setScale(0.25, h, 0.25);
