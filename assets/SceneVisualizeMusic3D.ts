@@ -9,7 +9,7 @@
  * LastEditTime: 2021-07-07 22:03:56
 */ 
 
-import { _decorator, Component, Node, AudioSource, SpriteFrame, AudioClip, instantiate, UITransform, Texture2D, director, gfx, TiledUserNodeData, RenderTexture } from 'cc';
+import { _decorator, Component, Node, AudioSource, SpriteFrame, AudioClip, instantiate, UITransform, Texture2D, director, gfx, TiledUserNodeData, RenderTexture, Slider, Camera } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('SceneVisualizeMusic3D')
@@ -30,6 +30,9 @@ export default class SceneVisualizeMusic3D extends Component {
 
     @property([SpriteFrame])
     fftTextures: SpriteFrame[] = [];
+
+    @property(Camera)
+    targetCamera: Camera = null;
 
     // @property(RenderTexture)
     // dummyRT: RenderTexture = null;
@@ -63,11 +66,23 @@ export default class SceneVisualizeMusic3D extends Component {
         region.texExtent.height = texture.height;
 
         // todo: 如何让Texture2D转换成RT？或者如何直接读取Texture2D的内容？
-        director.root.device.copyFramebufferToBuffer(texture.window?.framebuffer!, arrayBuffer, [region]);
+        // director.root.device.copyFramebufferToBuffer(texture.window?.framebuffer!, arrayBuffer, [region]);
 
         // let frameBuffer = texture.getGFXTexture()._device.createFramebuffer();
         // director.root.device.copyFramebufferToBuffer(framebuffer, arrayBuffer, [region]);
         return arrayBuffer;
+    }
+
+    public OnSliderChanged(e: Slider) {
+        let progress = e.progress;
+        let rc = this.targetCamera.rect;
+        if (e.name.startsWith("SliderW")) {
+            rc.width = progress;
+        } else {
+            rc.height = progress;
+        }
+
+        this.targetCamera.rect = rc;
     }
 
     public NextAudio() {
