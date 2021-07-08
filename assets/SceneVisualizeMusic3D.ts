@@ -9,7 +9,7 @@
  * LastEditTime: 2021-07-07 22:03:56
 */ 
 
-import { _decorator, Component, Node, AudioSource, SpriteFrame, AudioClip, instantiate, UITransform, Texture2D, director, gfx, TiledUserNodeData, RenderTexture, Slider, Camera } from 'cc';
+import { _decorator, Component, Node, AudioSource, SpriteFrame, AudioClip, instantiate, UITransform, Texture2D, director, gfx, TiledUserNodeData, RenderTexture, Slider, Camera, Sprite, size, v2, rect } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('SceneVisualizeMusic3D')
@@ -34,6 +34,17 @@ export default class SceneVisualizeMusic3D extends Component {
     @property(Camera)
     targetCamera: Camera = null;
 
+    // 需要被渲染到RT的sprite
+    @property(Sprite)
+    srcContent: Sprite = null;
+
+    // 展示RT的sprite
+    @property(Sprite)
+    content: Sprite = null;
+
+    @property(RenderTexture)
+    targetRT: RenderTexture = null;
+
     // @property(RenderTexture)
     // dummyRT: RenderTexture = null;
 
@@ -54,11 +65,11 @@ export default class SceneVisualizeMusic3D extends Component {
     }
 
     protected ReadTexture(sf: SpriteFrame): ArrayBuffer {
-        let texture = sf.texture;
+        let texture = sf.texture as RenderTexture;
         if (!texture)
             return null;
 
-        let arrayBuffer = new ArrayBuffer(texture.width * texture.height);      // color depth is 1byte, need * 4 here?
+        let arrayBuffer = new ArrayBuffer(texture.width * texture.height * 4);      // color depth is 1byte, need * 4 here?
         let region = new gfx.BufferTextureCopy;
         region.texOffset.x = 0;
         region.texOffset.y = 0;
@@ -66,7 +77,7 @@ export default class SceneVisualizeMusic3D extends Component {
         region.texExtent.height = texture.height;
 
         // todo: 如何让Texture2D转换成RT？或者如何直接读取Texture2D的内容？
-        // director.root.device.copyFramebufferToBuffer(texture.window?.framebuffer!, arrayBuffer, [region]);
+        director.root.device.copyFramebufferToBuffer(texture.window?.framebuffer!, arrayBuffer, [region]);
 
         // let frameBuffer = texture.getGFXTexture()._device.createFramebuffer();
         // director.root.device.copyFramebufferToBuffer(framebuffer, arrayBuffer, [region]);
@@ -74,7 +85,7 @@ export default class SceneVisualizeMusic3D extends Component {
     }
 
     public OnSliderChanged(e: Slider) {
-        let progress = e.progress;
+        let progress = e.progress * 2.;
         let rc = this.targetCamera.rect;
         if (e.name.startsWith("SliderW")) {
             rc.width = progress;
@@ -90,8 +101,15 @@ export default class SceneVisualizeMusic3D extends Component {
             return;
 
         let index = this._audioIndex = (this._audioIndex + 1) % this.clips.length;
-        this._arrayBuffer = this.ReadTexture(this.fftTextures[index]);
-        this._fft = new Uint8Array(this._arrayBuffer);
+        this.RenderToRT(this.fftTextures[index], this.srcContent, this.content);
+
+        // read data from RT next frame
+        let that = this;
+        this.scheduleOnce(() => {
+            that._arrayBuffer = that.ReadTexture(that.content.spriteFrame);
+            that._fft = new Uint8Array(that._arrayBuffer);
+            // todo: disable camera after that
+        }, 0.);        
 
         let audioSource = this._audioSource!;
         audioSource.stop();
@@ -100,19 +118,53 @@ export default class SceneVisualizeMusic3D extends Component {
         audioSource.play();
     }
 
-    start () {
-        // [3]
+    start() {
+
+    }
+
+    /**
+     * 将srcImg赋值给src，渲染到dst的RenderTexture上
+     * @param srcImg 
+     * @param src 
+     * @param dst 
+     */
+    protected RenderToRT(srcImg: SpriteFrame, src: Sprite, dst: Sprite) {
+        let imgSize = srcImg.originalSize;
+        src.getComponent(UITransform).contentSize = imgSize;
+        dst.getComponent(UITransform).contentSize = imgSize;
+
+        this.targetRT.resize(imgSize.width, imgSize.height);
+        this.targetCamera.orthoHeight = imgSize.height / 2;
+        this.targetCamera.targetTexture = this.targetRT;
+        let sp = new SpriteFrame;
+        sp.reset({
+            originalSize: imgSize,
+            rect: rect(0, 0, imgSize.width, imgSize.height),
+            offset: v2(0, 0),
+            isRotate: false
+        });
+
+        sp.packable = false;
+        sp.texture = this.targetRT;
+
+        src.spriteFrame = srcImg;
+        dst.spriteFrame = sp;
     }
 
     protected Tick() {
         if (!this._audioSource?.playing)
             return;
 
-        if (!this._arrayBuffer)
+        if (!this._fft)
             return;
 
         let t = this._audioSource!.currentTime;
         let frame = Math.floor(t * 60);
+
+        //test
+        //let poss = this.node.children[0].position;
+        //this.node.children[0].setPosition(poss.x, frame % 10, poss.z);
+        //return;
 
         let texture = this.fftTextures[this._audioIndex].texture;
         // let textureHeight = texture.height;
@@ -126,12 +178,12 @@ export default class SceneVisualizeMusic3D extends Component {
         let fft = this._fft;
         let children = this.node.children;
         for (let c = startCol; c < Math.min(children.length, endCol); ++c) {        // todo: only 16 pillars
-            let v = fft[row * texture.width + c];
+            let v = fft[(row * texture.width + c) * 4];
             let pillar = children[c - startCol];
             let pos = pillar.position;
             let h = v / 255 * 5;        // map height to [0, 5]
-            pillar.scale.set(0.25, h, 0.25);
-            pillar.position.set(pos.x, h/2+0.01, pos.z);
+            pillar.setScale(0.25, h, 0.25);
+            pillar.setPosition(pos.x, h/2+0.01, pos.z);
         }
     }
 
