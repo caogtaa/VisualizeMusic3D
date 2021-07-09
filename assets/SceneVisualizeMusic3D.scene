@@ -797,7 +797,10 @@
       "__id__": 30
     },
     "_visFlags": 0,
-    "_customMaterial": null,
+    "_customMaterial": {
+      "__uuid__": "eafd7e62-fe8d-4f6e-9cc4-787329426f30",
+      "__expectedType__": "cc.Material"
+    },
     "_srcBlendFactor": 2,
     "_dstBlendFactor": 4,
     "_color": {

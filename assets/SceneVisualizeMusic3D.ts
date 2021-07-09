@@ -154,10 +154,47 @@ export default class SceneVisualizeMusic3D extends Component {
         dst.spriteFrame = sp;
 
         // overwrite RT sampler
-        let sampler = srcImg.texture.getGFXSampler();
-        this.targetRT.getGFXSampler = () => {
-            return sampler;
-        };
+        // let sampler = srcImg.texture.getGFXSampler();
+        // this.targetRT.getGFXSampler = () => {
+        //     return sampler;
+        // };
+    }
+
+    /**
+     * 对某一帧某个频段的振幅进行采样
+     * @param frame 
+     * @param freq 范围[0, 31]
+     * @returns 
+     * todo: encapsulate sampleLength, samplePerRow, colorBytes into colorBuff
+     */
+    protected SampleAmp(colorBuff: Uint8Array, frame: number, freq: number): number {
+        let textureWidth = this.targetRT.width;
+        const samplePerRow = 16;
+        const sampleLength = textureWidth / samplePerRow;
+        const colorBytes = 4;
+
+        let index = (frame * sampleLength + freq) * colorBytes;
+        return colorBuff[index];
+    }
+
+    /**
+     * 对某一帧整体振幅进行采样
+     * @param frame 
+     * @returns 
+     */
+    protected SampleTotalAmp(colorBuff: Uint8Array, frame: number): number {
+        let textureWidth = this.targetRT.width;
+        const samplePerRow = 16;
+        const sampleLength = textureWidth / samplePerRow;
+        const colorBytes = 4;
+
+        // sample bass and mid area of spectum
+        const bassIndex = frame * sampleLength * colorBytes;
+        let v = colorBuff[bassIndex];
+        v += colorBuff[bassIndex + 12 * colorBytes];
+
+        // average all samples
+        return v * 0.5;
     }
 
     protected Tick() {
@@ -170,21 +207,22 @@ export default class SceneVisualizeMusic3D extends Component {
         let t = this._audioSource!.currentTime;
         let frame = Math.floor(t * 60);
 
-        let textureWidth = this.targetRT.width;
-        let textureHeight = this.targetRT.height;
-        let samplePerRow = 16;
-        let sampleLength = textureWidth / samplePerRow;
+        // let textureWidth = this.targetRT.width;
+        // let textureHeight = this.targetRT.height;
+        // let samplePerRow = 16;
+        // let sampleLength = textureWidth / samplePerRow;
         
-        // RT Y上下颠倒
-        let row = textureHeight - 1 - Math.floor(frame / samplePerRow);
-        let startCol = (frame % samplePerRow) * sampleLength;
-        let endCol = (frame % samplePerRow + 1) * sampleLength;
+        // let row = Math.floor(frame / samplePerRow);
+        // let startCol = (frame % samplePerRow) * sampleLength;
+        // let endCol = (frame % samplePerRow + 1) * sampleLength;
 
         let fft = this._fft;
         let children = this.node.children;
         for (let i = 0; i < children.length; ++i) {
-            let c = startCol + i * 2;       // 16个柱子，但是sampleLength = 32
-            let v = fft[(row * textureWidth + c) * 4];
+            let v = this.SampleAmp(fft, frame, i * 2);      // 16个柱子，但是sampleLength = 32
+
+            // let c = startCol + i * 2;
+            // let v = fft[(row * textureWidth + c) * 4];
             let pillar = children[i];
             let pos = pillar.position;
             let h = v / 255 * 5;        // map height to [0, 5]
