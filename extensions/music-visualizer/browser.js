@@ -16,9 +16,10 @@ Object.defineProperty(exports, "__esModule", {
 
 var electron_1 = require("electron")
   , Pkg = __importStar(require("./package.json"))
-  , fs_1 = require("fs")
-  , path_1 = require("path")
-  , CFG_PATH = path_1.join(__dirname, "./.menu-config.json");
+  , Fs = require("fs")
+  , Path = require("path");
+
+// var CFG_PATH = Path.join(__dirname, "./.menu-config.json");
 // fs_1.existsSync(CFG_PATH) || fs_1.writeFileSync(CFG_PATH, JSON.stringify({
 //     assets: [],
 //     hierarchy: []
@@ -52,7 +53,7 @@ function hookFunc(e) {
         label: "提取FFT纹理",
         // path: "F:\\workspace\\VisualizeMusic3D\\extensions\\music-visualizer\\what.js"
         click: () => {
-            console.log("tut2u");
+            doExtractFFT();
         }
     }];
 
@@ -141,13 +142,100 @@ function extendCustomMenu(e, n) {
     }))
 }
 
-exports.methods = {
-    openPanel: function() {
-        Editor.Panel.open("right-menu")
-    },
+function doExtractFFT() {
+    console.log("doExtractFFT");
+    return;
+    this._doExtractFFT(UpdateTextureProperty);
+}
 
+function _doExtractFFT(callback) {
+    try {
+        let selection = Editor.Selection.curSelection('asset');
+        if (selection.length === 0) {
+            console.log("[VIS] 未选中声音文件");
+            return;
+        }
+
+        let uuid = selection[0];
+        if (!isAudioFile(uuid)) {
+            console.log("[VIS] 未选中声音文件");
+            return;
+        }
+
+        let path = Editor.assetdb.remote.uuidToFspath(uuid);
+        let Generator = require("./FFTTextureGenerator");
+        let generator = new Generator;
+        generator.Generate(uuid, path, callback);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        
+    }
+}
+
+function UpdateTextureProperty(param) {
+    let outputPath = param;
+    try {
+        // refresh asset db
+        let assetdb = Editor.assetdb;
+        let url = assetdb.fspathToUrl(outputPath);
+        url = Path.dirname(url);
+        console.log(`[VIS] refresh ${url}`);
+        assetdb.refresh(url, (err, results) => {
+            if (err) {
+                console.log('[VIS]', err);
+                return;
+            }
+
+            let outUuid = assetdb.fspathToUuid(outputPath);
+            console.log(`[VIS] outUuid = ${outUuid}`);
+            let meta = assetdb.loadMetaByUuid(outUuid);
+            if (meta) {
+                meta.filterMode = 'point';
+                meta.packable = false;
+
+                // Editor自带的meta功能太难用了，stringify meta时还不包含subMeta信息。改用自己读写meta文件。
+                let metaPath = outputPath + ".meta";
+                let data = Fs.readFileSync(metaPath, 'utf8');
+                let obj = JSON.parse(data);
+                obj.filterMode = 'point';
+                obj.packable = false;
+                Fs.writeFileSync(metaPath, JSON.stringify(obj, null, 2));
+                console.log("[VIS] meta updated");
+                console.log("[VIS] finished");
+
+                /*var cache = [];
+                var str = JSON.stringify(meta, function(key, value) {
+                    if (key.startsWith('_'))
+                        return undefined;
+
+                    if (typeof value === 'object' && value !== null) {
+                        if (cache.indexOf(value) !== -1) {
+                            // 移除
+                            return undefined;
+                        }
+                        // 收集所有的值
+                        cache.push(value);
+                    }
+                    return value;
+                });
+
+                cache = null;
+                console.log(`[VIS] ${str}`);
+                // assetdb.saveMeta(url, str, (err, meta) => {
+                //     console.log("[VIS] meta updated");
+                //     console.log("[VIS] finished");
+                // });*/
+            }
+        });
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+exports.methods = {
     extractFFT: function() {
-        console.log("extractFFT");
+        doExtractFFT();
     }
 },
 
