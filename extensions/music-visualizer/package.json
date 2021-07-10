@@ -1,0 +1,20 @@
+{
+    "name": "music-visualizer",
+    "package_version": 2,
+    "version": "1.0.0",
+    "description": "Cool music visualization components and tools",
+    "author": "caogtaa@gmail.com",
+    "main": "browser.js",
+    "contributions": {
+        "menu": [{
+            "path": "i18n:menu.extension",
+            "label": "i18n:music-visualizer.PKG_extract_fft",
+            "message": "ExtractFFT"
+        }],
+        "messages": {
+            "ExtractFFT": {
+                "methods": ["ExtractFFT"]
+            }
+        }
+    }
+}
