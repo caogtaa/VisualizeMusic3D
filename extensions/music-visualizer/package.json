@@ -9,11 +9,11 @@
         "menu": [{
             "path": "i18n:menu.extension",
             "label": "i18n:music-visualizer.PKG_extract_fft",
-            "message": "ExtractFFT"
+            "message": "extractFFT"
         }],
         "messages": {
-            "ExtractFFT": {
-                "methods": ["ExtractFFT"]
+            "extractFFT": {
+                "methods": ["extractFFT"]
             }
         }
     }
