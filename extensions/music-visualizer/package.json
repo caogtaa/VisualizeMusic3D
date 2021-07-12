@@ -6,6 +6,9 @@
     "author": "caogtaa@gmail.com",
     "main": "browser.js",
     "contributions": {
+        "scene": {
+            "script": "./scene.js"
+        },
         "menu": [{
             "path": "i18n:menu.extension",
             "label": "i18n:music-visualizer.PKG_extract_fft",

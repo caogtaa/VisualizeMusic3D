@@ -35,7 +35,7 @@ class FFTTextureGenerator {
 
     public Generate(uuid: string, audioPath: string) {
         let that = this;
-        Editor.log(`[VIS] start loading ${audioPath}`);
+        console.log(`[VIS] start loading ${audioPath}`);
         //@ts-ignore
         cc.assetManager.loadAny({uuid: uuid}, (err: Error, clip: cc.AudioClip) => {
             if (err)

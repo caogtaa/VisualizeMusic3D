@@ -18,7 +18,8 @@ var FFTTextureGenerator = /** @class */ (function () {
     }
     FFTTextureGenerator.prototype.Generate = function (uuid, audioPath) {
         var that = this;
-        Editor.log("[VIS] start loading " + audioPath);
+        console.log("[VIS] start loading " + audioPath);
+        return;
         //@ts-ignore
         cc.assetManager.loadAny({ uuid: uuid }, function (err, clip) {
             if (err)

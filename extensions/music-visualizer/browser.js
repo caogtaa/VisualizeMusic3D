@@ -143,26 +143,41 @@ function extendCustomMenu(e, n) {
 }
 
 function doExtractFFT() {
-    console.log("doExtractFFT");
-    return;
-    this._doExtractFFT(UpdateTextureProperty);
+    _doExtractFFT(UpdateTextureProperty);
 }
 
-function _doExtractFFT(callback) {
+async function _doExtractFFT(callback) {
     try {
-        let selection = Editor.Selection.curSelection('asset');
+        let selectedType = Editor.Selection.getLastSelectedType();
+        if (selectedType !== "asset")
+            return;
+
+        let selection = Editor.Selection.getSelected("asset");
         if (selection.length === 0) {
             console.log("[VIS] 未选中声音文件");
             return;
         }
 
         let uuid = selection[0];
-        if (!isAudioFile(uuid)) {
+        if (!await isAudioFile(uuid)) {
             console.log("[VIS] 未选中声音文件");
             return;
         }
 
-        let path = Editor.assetdb.remote.uuidToFspath(uuid);
+        const options = {
+            name: 'scene',
+            method: 'log',
+            args: [
+                'test',
+            ],
+        };
+
+        var res = await Editor.Message.request('scene', 'execute-scene-script', options);
+        console.log(res);
+        return;
+
+        let info = await Editor.Message.request("asset-db", "query-asset-info", uuid);
+        let path = info.file;
         let Generator = require("./FFTTextureGenerator");
         let generator = new Generator;
         generator.Generate(uuid, path, callback);
@@ -171,6 +186,15 @@ function _doExtractFFT(callback) {
     } finally {
         
     }
+}
+
+async function isAudioFile(uuid) {
+    let info = await Editor.Message.request("asset-db", "query-asset-info", uuid);
+    if (!info?.file)
+        return false;
+
+    let ext = Path.extname(info.file);
+    return ['.wav', '.mp3', '.ogg'].includes(ext);
 }
 
 function UpdateTextureProperty(param) {
